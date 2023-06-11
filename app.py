@@ -3,7 +3,7 @@ import qrcode
 from io import BytesIO
 import cv2
 import numpy as np
-import pyzbar.pyzbar as pyzbar
+#import pyzbar.pyzbar as pyzbar
 import os
 from PIL import Image
 from PIL import ImageDraw
@@ -78,7 +78,7 @@ def upload_qrcode():
         qr_code = request.files['qr_code']
         qr_code_img = cv2.imdecode(np.fromstring(qr_code.read(), np.uint8), cv2.IMREAD_UNCHANGED)
 
-        decoded_qr_codes = pyzbar.decode(qr_code_img)
+        decoded_qr_codes = qr_code_img
         if decoded_qr_codes:
             qr_data = decoded_qr_codes[0].data.decode('utf-8')
             qr_data_list = qr_data.split(',')
