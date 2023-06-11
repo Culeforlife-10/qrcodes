@@ -2,5 +2,5 @@ flask
 qrcode
 pillow
 opencv-python
-pyzbar
+pyzbar==0.1.8
 gunicorn
