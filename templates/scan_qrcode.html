@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Scan QR Code</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+</head>
+<body>
+    <h1>Scan QR Code</h1>
+    <video id="video" width="640" height="480" style="display: none;"></video>
+    <canvas id="canvas" width="640" height="480" style="display: none;"></canvas>
+    <div id="qrData"></div>
+
+    <script>
+        function startScan() {
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('canvas');
+            const qrDataDiv = document.getElementById('qrData');
+            const context = canvas.getContext('2d');
+
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(function(stream) {
+                    video.srcObject = stream;
+                    video.play();
+                })
+                .catch(function(err) {
+                    console.error(err);
+                });
+
+            video.addEventListener('play', function() {
+                const interval = setInterval(function() {
+                    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                    const code = jsQR(imageData.data, imageData.width, imageData.height);
+                    
+                    if (code) {
+                        clearInterval(interval);
+                        video.srcObject.getTracks().forEach(track => track.stop());
+
+                        qrDataDiv.innerHTML = '<p>Scanned QR Code:</p><p>' + code.data + '</p>';
+                        $.ajax({
+                            url: '/process_qr',
+                            type: 'POST',
+                            data: { content: code.data },
+                            success: function(response) {
+                                qrDataDiv.innerHTML += '<p>Response from server:</p><p>' + response + '</p>';
+                            }
+                        });
+                    }
+                }, 100);
+            });
+        }
+
+        startScan();
+    </script>
+</body>
+</html>

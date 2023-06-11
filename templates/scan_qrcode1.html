@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>QR Code Scanner</title>
+    <script src="https://rawgit.com/schmich/instascan-builds/master/instascan.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pyzbar.js/0.2.0/zbar.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <style>
+        .details {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 50px;
+        }
+
+        .details img {
+            width: 200px;
+            height: auto;
+            margin-bottom: 20px;
+        }
+
+        .details p {
+            margin: 0;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <h1>QR Code Scanner</h1>
+    <div id="scannerPage">
+        <video id="video"></video>
+        <button id="uploadButton">Upload QR Code</button>
+    </div>
+    <div id="detailsPage" style="display: none;">
+        <div class="details">
+            <img id="qrImage" alt="QR Code Image">
+            <p id="name"></p>
+            <p id="clubName"></p>
+            <p id="zone"></p>
+            <p id="meal_type"></p>           
+        </div>
+    </div>
+    <input type="file" id="qrFile" accept="image/*" style="display: none;">
+    <script>
+        const scanner = new Instascan.Scanner({ video: document.getElementById('video') });
+
+        scanner.addListener('scan', function(content) {
+            handleScannedContent(content);
+        });
+
+        document.getElementById('uploadButton').addEventListener('click', function() {
+            document.getElementById('qrFile').click();
+        });
+
+        document.getElementById('qrFile').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                const img = document.createElement('img');
+                img.onload = function() {
+                    const barcode = new BarcodeScanner();
+                    barcode.scan(img)
+                        .then(function(result) {
+                            if (result.length > 0) {
+                                handleScannedContent(result[0].data);
+                            } else {
+                                alert('No QR code found.');
+                            }
+                        })
+                        .catch(function(error) {
+                            console.error(error);
+                            alert('An error occurred while scanning the QR code.');
+                        });
+                };
+
+                img.src = e.target.result;
+            };
+
+            reader.readAsDataURL(file);
+        });
+
+        Instascan.Camera.getCameras().then(function (cameras) {
+            if (cameras.length > 0) {
+                scanner.start(cameras[0]);
+            } else {
+                console.error('No cameras found.');
+            }
+        }).catch(function (e) {
+            console.error(e);
+        });
+
+        function handleScannedContent(content) {
+            document.getElementById('scannerPage').style.display = 'none';
+            document.getElementById('detailsPage').style.display = 'block';
+
+            const [name, clubName,zone,meal_type] = content.split(',');
+            console.log(name)
+
+            document.getElementById('qrImage').src = '';
+            document.getElementById('name').textContent = name;
+            document.getElementById('clubName').textContent = clubName;
+            document.getElementById('zone').textContent = zone;
+            document.getElementById('meal_type').textContent = meal_type;
+            $.ajax({
+            url: '/scan_qrcode',
+            data: {'name':name,'clubName':clubName,'zone':zone,'meal_type':meal_type},
+            type: 'POST',
+            dataType: 'json',
+            success: function(response){
+            console.log(response);
+        },
+        error: function(error){
+            console.log(error);
+        }
+    });
+
+        }
+
+    </script>
+</body>
+</html>
