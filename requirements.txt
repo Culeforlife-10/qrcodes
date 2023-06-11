@@ -2,5 +2,6 @@ flask
 qrcode
 pillow
 opencv-python
-pyzbar==0.1.8
+pyzbar
 gunicorn
+!apt install libzbar0
